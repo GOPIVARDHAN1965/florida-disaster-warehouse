@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Florida Disaster Warehouse</title>
+<meta name="description" content="A tested data warehouse of FEMA, NOAA and Census data on Florida disasters: where recovery money goes, how fast it arrives, and a model of which counties get federal aid.">
+<style>
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb; --card: #ffffff; --border: #e6e5e1;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #77766f;
+  --series-1: #2a78d6; --series-2: #eb6834; --track: #efeeea; --grid: #e6e5e1;
+  --s0: #cde2fb; --s1: #9ec5f4; --s2: #5598e7; --s3: #256abf; --s4: #0d366b; --nodata: #efeeea;
+  --outline: #0b0b0b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #1a1a19; --card: #222221; --border: #34342f;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #94938a;
+    --series-1: #3987e5; --series-2: #d95926; --track: #2c2c2a; --grid: #34342f;
+    --s0: #184f95; --s1: #1c5cab; --s2: #2a78d6; --s3: #6da7ec; --s4: #b7d3f6; --nodata: #2c2c2a;
+    --outline: #ffffff;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1a1a19; --card: #222221; --border: #34342f;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #94938a;
+  --series-1: #3987e5; --series-2: #d95926; --track: #2c2c2a; --grid: #34342f;
+  --s0: #184f95; --s1: #1c5cab; --s2: #2a78d6; --s3: #6da7ec; --s4: #b7d3f6; --nodata: #2c2c2a;
+  --outline: #ffffff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--text-primary);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 40px 16px 72px; }
+h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.015em; }
+h2 { font-size: 20px; margin: 48px 0 6px; letter-spacing: -0.01em; }
+h3 { font-size: 15px; margin: 0 0 10px; }
+p { margin: 0 0 12px; }
+.lede { color: var(--text-secondary); max-width: 760px; }
+.muted { color: var(--text-muted); font-size: 13px; }
+a { color: var(--series-1); }
+.grid { display: grid; gap: 16px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); margin: 24px 0; }
+.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.kpi .v { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--text-secondary); font-size: 13px; }
+.pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.pipe .step { flex: 1 1 150px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.pipe .step b { display: block; font-size: 14px; }
+.pipe .arrow { align-self: center; color: var(--text-muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-primary); max-width: 100%; }
+svg.map { width: 100%; height: auto; display: block; }
+svg.map path { stroke: var(--card); stroke-width: 0.6; outline: none; }
+svg.map path:hover, svg.map path:focus { stroke: var(--outline); stroke-width: 1.5; }
+svg.map path.actual { stroke: var(--outline); stroke-width: 1.6; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.legend i.ring { background: transparent; border: 2px solid var(--outline); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-secondary); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.best { font-weight: 650; }
+.inbar { display: inline-block; height: 8px; border-radius: 4px; background: var(--series-1); vertical-align: middle; margin-left: 6px; }
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; font-size: 13px; }
+.bar .n { color: var(--text-secondary); }
+.bar .track { grid-column: 1 / -1; height: 8px; background: var(--track); border-radius: 4px; }
+.bar .fill { height: 100%; background: var(--series-1); border-radius: 4px; }
+.detail dl { display: grid; grid-template-columns: auto auto; gap: 4px 16px; margin: 0; font-size: 13px; }
+.detail dt { color: var(--text-secondary); }
+.detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.findings li { margin-bottom: 8px; }
+code { font-size: 12.5px; background: var(--track); padding: 1px 5px; border-radius: 4px; }
+#tip { position: fixed; pointer-events: none; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; font-size: 13px; display: none; box-shadow: 0 4px 12px rgb(0 0 0 / .14); z-index: 5; }
+#tip b { display: block; font-variant-numeric: tabular-nums; }
+footer { margin-top: 56px; color: var(--text-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Florida Disaster Warehouse</h1>
+  <p class="lede">A tested data warehouse that joins 25 years of FEMA disaster spending, NOAA hurricane tracks and Census data for
+    Florida's 67 counties. It shows where recovery money goes, how long it takes to arrive, and whether a hurricane's track
+    can predict which counties will get federal aid. Rebuilt every week by a scheduled pipeline.</p>
+  <p class="muted">Data as of <span id="generated">…</span> ·
+    <a href="https://github.com/GOPIVARDHAN1965/florida-disaster-warehouse">source on GitHub</a> ·
+    <a href="dbt/">dbt docs &amp; lineage graph</a></p>
+
+  <div class="grid kpis">
+    <div class="card kpi"><div class="v" id="k-rows">–</div><div class="l">source rows ingested</div></div>
+    <div class="card kpi"><div class="v" id="k-models">–</div><div class="l">dbt models</div></div>
+    <div class="card kpi"><div class="v" id="k-tests">–</div><div class="l">data tests passing</div></div>
+    <div class="card kpi"><div class="v" id="k-recovery">–</div><div class="l">federal recovery dollars tracked since 2000</div></div>
+  </div>
+
+  <h2>How it's built</h2>
+  <div class="pipe" aria-label="Pipeline stages">
+    <div class="step"><b>Extract</b>OpenFEMA API (incremental by <code>lastRefresh</code>), NOAA HURDAT2, Census</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Raw</b>Append-only Parquet, every column text</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>dbt staging</b>Typed, deduped to latest version, county keys resolved</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>dbt marts</b>Disaster × county facts, storm exposure, county summary</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Model + page</b>scikit-learn on the marts, exported to this page</div>
+  </div>
+  <p class="muted" style="margin-top:8px">DuckDB + dbt, orchestrated by GitHub Actions every Monday. Each run fetches only rows FEMA
+    changed since the last run, rebuilds and tests the warehouse, and publishes a versioned data snapshot.</p>
+  <div class="table-wrap card" style="margin-top:12px"><table id="sources"><thead><tr><th>Source table</th><th class="num">Rows</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>Where the money goes</h2>
+  <p class="lede">Federal recovery dollars per county since 2000: FEMA Individual Assistance to homeowners, Public Assistance to
+    local governments, and National Flood Insurance claim payments. Hover or tab through the counties.</p>
+  <div class="grid two">
+    <div class="card">
+      <div class="controls">
+        <label for="metric">Show</label>
+        <select id="metric">
+          <option value="recovery_per_resident">Recovery dollars per resident</option>
+          <option value="recovery">Total recovery dollars</option>
+          <option value="major_declarations">Major disaster declarations</option>
+          <option value="nfip">Flood insurance claims paid</option>
+          <option value="mitigation_ratio">Mitigation dollars per recovery dollar</option>
+        </select>
+      </div>
+      <svg class="map" id="map" role="img" aria-label="Florida county map"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="card detail" id="detail">
+      <h3 id="d-name">Pick a county</h3>
+      <p class="muted" id="d-hint">Hover or focus a county on the map to see its numbers.</p>
+      <dl id="d-list"></dl>
+    </div>
+  </div>
+  <div class="card table-wrap" style="margin-top:16px">
+    <h3 id="top-title">Top counties</h3>
+    <table id="top"><thead><tr><th>County</th><th class="num" id="top-metric">Value</th><th class="num">Population</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <h2>Storm by storm</h2>
+  <p class="lede">Every Florida major-disaster declaration since 2000 linked to a NOAA storm track. The last column is the median
+    number of days from the declaration to the first federal Public Assistance obligation for each project.</p>
+  <div class="card table-wrap">
+    <table id="storms"><thead><tr><th>Storm</th><th class="num">Year</th><th class="num">Peak cat.</th><th class="num">Counties</th>
+      <th class="num">Individual Assistance</th><th class="num">Public Assistance</th><th class="num">Mitigation (HMGP)</th><th class="num">Median days to PA $</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <h2>Can a storm's track predict who gets aid?</h2>
+  <p class="lede">For every storm since 2000 that passed within 300 km of a county, the model predicts whether that county
+    will receive FEMA Individual Assistance. It uses only distance and wind near the county, plus population. It is evaluated
+    two ways: folds split by storm (a storm is never seen in training and testing), and a time split that trains on 2000–2019
+    and tests on 2020–2025.</p>
+  <div class="grid two">
+    <div class="card table-wrap">
+      <h3>Held-out performance</h3>
+      <table id="metrics"><thead><tr><th>Model</th><th class="num">ROC AUC<br><span class="muted">by-storm CV</span></th>
+        <th class="num">ROC AUC<br><span class="muted">2020+ storms</span></th><th class="num">PR AUC<br><span class="muted">2020+ storms</span></th></tr></thead><tbody></tbody></table>
+      <p class="muted" style="margin-top:10px">Baseline rule: "hurricane-force winds passed within 100 km." PR AUC matters here because only about 1 in 7 storm × county pairs gets aid.</p>
+      <h3 style="margin-top:16px">What drives the prediction</h3>
+      <div class="bars" id="importance"></div>
+      <p class="muted" style="margin-top:8px">Permutation importance: drop in ROC AUC on 2020+ storms when a feature is shuffled.</p>
+    </div>
+    <div class="card">
+      <div class="controls">
+        <label for="storm">Storm</label>
+        <select id="storm"></select>
+        <span class="muted" id="storm-stats"></span>
+      </div>
+      <svg class="map" id="pmap" role="img" aria-label="Predicted probability of FEMA Individual Assistance by county"></svg>
+      <div class="legend" id="plegend"></div>
+      <p class="muted" style="margin-top:8px">Out-of-fold predictions: the model that scored each storm never saw it in training.</p>
+    </div>
+  </div>
+
+  <h2>What the tests caught</h2>
+  <div class="card">
+    <ul class="findings">
+      <li><b>Miami-Dade's old county code.</b> 323 mitigation projects use FIPS <code>12025</code>, Dade County's code before it was renamed Miami-Dade
+        (<code>12086</code>) in 1997. A relationships test flagged them; a shared dbt macro now maps the old code everywhere.</li>
+      <li><b>Money in counties without a declaration row.</b> The reconciliation test (county dollars must add up to FEMA's own per-disaster total)
+        showed the disaster × county fact table was dropping dollars spent in counties that had no county-level declaration. The table's grain is now
+        every disaster × county pair seen in any source.</li>
+      <li><b>Summary totals without project detail.</b> Fire-management grants (e.g. the Suwannee Fire Complex, $13.8M) appear in FEMA's disaster
+        summaries but publish no Public Assistance project rows, so they're excluded from the reconciliation check rather than silently mismatched.</li>
+      <li><b>Spelling drift.</b> County names arrive as <code>Miami-Dade (County)</code>, <code>DADE</code>, <code>St. Johns</code>, <code>De Soto</code>. A normalised
+        county key resolves them; a custom test fails the build if a new unresolvable name shows up (tribal reservations are expected and excluded).</li>
+      <li><b>A leaky feature.</b> The first model used each storm's lifetime peak wind and raised 56 false alarms for Tropical Storm Eta, which peaked as a
+        Category 4 over Central America but was weak in Florida. Switching to wind measured near each county lifted held-out ROC AUC from 0.90 to 0.92.</li>
+    </ul>
+  </div>
+
+  <footer>
+    Sources: <a href="https://www.fema.gov/about/openfema/data-sets">OpenFEMA</a> (declarations, Individual &amp; Public Assistance, Hazard Mitigation
+    Assistance, NFIP claims), <a href="https://www.nhc.noaa.gov/data/#hurdat">NOAA NHC HURDAT2</a>, U.S. Census Bureau population estimates and
+    gazetteer. An independent project built on public data. Dollar figures are nominal (not inflation-adjusted).
+  </footer>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const fmtMoney = n => n == null ? '—' : n >= 1e9 ? '$' + (n / 1e9).toFixed(1) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(n >= 1e8 ? 0 : 1) + 'M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + 'k' : '$' + Math.round(n);
+const fmtInt = n => n == null ? '—' : Math.round(n).toLocaleString();
+const METRICS = {
+  recovery_per_resident: { label: 'Recovery $ per resident', fmt: n => n == null ? '—' : '$' + fmtInt(n) },
+  recovery: { label: 'Total recovery $', fmt: fmtMoney },
+  major_declarations: { label: 'Major declarations', fmt: fmtInt },
+  nfip: { label: 'Flood claims paid', fmt: fmtMoney },
+  mitigation_ratio: { label: 'Mitigation $ per recovery $', fmt: n => n == null ? '—' : (n * 100).toFixed(1) + '¢' },
+};
+const STEPS = ['--s0', '--s1', '--s2', '--s3', '--s4'];
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+const tip = $('tip');
+function showTip(e, value, label) {
+  tip.replaceChildren(Object.assign(document.createElement('b'), { textContent: value }), label);
+  tip.style.display = 'block';
+  const r = e.target.getBoundingClientRect();
+  const x = e.clientX || r.left + r.width / 2, y = e.clientY || r.top + r.height / 2;
+  tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - tip.offsetWidth - 8)) + 'px';
+  tip.style.top = (y + 16) + 'px';
+}
+const hideTip = () => tip.style.display = 'none';
+
+function legend(el, breaks, fmt, extra) {
+  el.replaceChildren();
+  breaks.forEach((b, i) => {
+    const s = document.createElement('span');
+    const sw = document.createElement('i'); sw.style.background = `var(${STEPS[i]})`;
+    s.append(sw, i === breaks.length - 1 ? `${fmt(b[0])}+` : `${fmt(b[0])}–${fmt(b[1])}`);
+    el.append(s);
+  });
+  if (extra) el.append(extra);
+}
+
+// quantile breaks into 5 classes
+function classify(values) {
+  const v = values.filter(x => x != null).sort((a, b) => a - b);
+  const q = [0, .2, .4, .6, .8, 1].map(p => d3.quantile(v, p));
+  const breaks = [0, 1, 2, 3, 4].map(i => [q[i], q[i + 1]]);
+  const cls = x => x == null ? null : Math.min(4, Math.max(0, d3.bisectRight(q.slice(1, 5), x)));
+  return { breaks, cls };
+}
+
+function drawMap(svg, features, path, valueOf, labelOf, onFocus, ringOf) {
+  const { breaks, cls } = classify(features.map(valueOf));
+  const sel = d3.select(svg).selectAll('path').data(features, f => f.id);
+  sel.join(enter => enter.append('path').attr('d', path).attr('tabindex', 0))
+    .attr('fill', f => { const c = cls(valueOf(f)); return c == null ? 'var(--nodata)' : `var(${STEPS[c]})`; })
+    .attr('class', f => ringOf && ringOf(f) ? 'actual' : null)
+    .attr('aria-label', f => labelOf(f))
+    .on('pointermove focus', (e, f) => { showTip(e, ...labelOf(f, true)); onFocus && onFocus(f); })
+    .on('pointerleave blur', hideTip);
+  return breaks;
+}
+
+Promise.all([
+  fetch('data.json').then(r => r.json()),
+  fetch('https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json').then(r => r.json()),
+]).then(([d, us]) => {
+  $('generated').textContent = d.generated_at;
+  $('k-rows').textContent = (d.sources.reduce((s, r) => s + r.rows, 0) / 1000).toFixed(0) + 'k';
+  $('k-models').textContent = d.dbt ? d.dbt.models : '—';
+  $('k-tests').textContent = d.dbt ? `${d.dbt.tests_passed}/${d.dbt.tests}` : '—';
+  $('k-recovery').textContent = fmtMoney(d.counties.reduce((s, c) => s + c.recovery, 0));
+  $('sources').tBodies[0].replaceChildren(...d.sources.map(s => row([s.source, [fmtInt(s.rows), 'num']])));
+
+  const byFips = new Map(d.counties.map(c => [c.fips, c]));
+  const features = topojson.feature(us, us.objects.counties).features.filter(f => f.id.startsWith('12'));
+  const fc = { type: 'FeatureCollection', features };
+  const W = 500, H = 470;
+  const proj = d3.geoMercator().fitSize([W, H], fc), path = d3.geoPath(proj);
+  for (const id of ['map', 'pmap']) $(id).setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // --- county metric map + detail + top table
+  function showDetail(f) {
+    const c = byFips.get(f.id); if (!c) return;
+    $('d-name').textContent = c.name + ' County';
+    $('d-hint').textContent = `Population ${fmtInt(c.population)} · since 2000`;
+    const items = [['Major disaster declarations', fmtInt(c.major_declarations)], ['Hurricane tracks within 100 km', fmtInt(c.hurricanes_within_100km)],
+      ['Individual Assistance', fmtMoney(c.ihp)], ['Public Assistance', fmtMoney(c.pa)], ['Flood claims', fmtInt(c.flood_claims)],
+      ['Flood claims paid', fmtMoney(c.nfip)], ['Recovery $ per resident', '$' + fmtInt(c.recovery_per_resident)],
+      ['Mitigation dollars', fmtMoney(c.mitigation)], ['Mitigation per recovery $', METRICS.mitigation_ratio.fmt(c.mitigation_ratio)]];
+    $('d-list').replaceChildren(...items.flatMap(([k, v]) => [Object.assign(document.createElement('dt'), { textContent: k }), Object.assign(document.createElement('dd'), { textContent: v })]));
+  }
+  function renderMetric() {
+    const m = $('metric').value, M = METRICS[m];
+    const breaks = drawMap($('map'), features, path, f => byFips.get(f.id)?.[m],
+      (f, parts) => { const c = byFips.get(f.id), v = M.fmt(c?.[m]); return parts ? [v, (c?.name || f.properties.name) + ' · ' + M.label] : `${c?.name}: ${v}`; },
+      showDetail);
+    legend($('legend'), breaks, M.fmt);
+    $('top-title').textContent = 'Top 10 counties by ' + M.label.toLowerCase();
+    $('top-metric').textContent = M.label;
+    const top = [...d.counties].sort((a, b) => (b[m] ?? -1) - (a[m] ?? -1)).slice(0, 10);
+    $('top').tBodies[0].replaceChildren(...top.map(c => row([c.name, [M.fmt(c[m]), 'num'], [fmtInt(c.population), 'num']])));
+  }
+  $('metric').addEventListener('input', renderMetric);
+  renderMetric();
+  showDetail({ id: d.counties.slice().sort((a, b) => b.recovery_per_resident - a.recovery_per_resident)[0].fips });
+
+  // --- storms table
+  const maxFed = Math.max(...d.storms.map(s => (s.ihp || 0) + (s.pa || 0)));
+  $('storms').tBodies[0].replaceChildren(...d.storms.map(s => {
+    const tr = row([s.storm[0] + s.storm.slice(1).toLowerCase(), [s.year, 'num'], [s.category ? s.category : 'TS', 'num'],
+      [fmtInt(s.counties_designated), 'num'], [fmtMoney(s.ihp), 'num'], [fmtMoney(s.pa), 'num'], [fmtMoney(s.hmgp), 'num'],
+      [fmtInt(s.median_days_to_pa), 'num']]);
+    const bar = document.createElement('span'); bar.className = 'inbar';
+    bar.style.width = Math.max(2, 80 * ((s.ihp || 0) + (s.pa || 0)) / maxFed) + 'px';
+    bar.title = 'IA + PA ' + fmtMoney((s.ihp || 0) + (s.pa || 0));
+    tr.cells[0].append(bar);
+    return tr;
+  }));
+
+  // --- model metrics
+  const mm = d.model, names = { baseline_rule: 'Baseline rule', logistic_regression: 'Logistic regression', gradient_boosting: 'Gradient boosting' };
+  const best = k => Math.max(...Object.keys(names).map(n => k(n)));
+  const cell = (v, b) => [v.toFixed(3), 'num' + (v === b ? ' best' : '')];
+  const bCv = best(n => mm.grouped_cv[n].roc_auc), bTs = best(n => mm.time_split[n].roc_auc), bPr = best(n => mm.time_split[n].pr_auc);
+  $('metrics').tBodies[0].replaceChildren(...Object.entries(names).map(([k, label]) =>
+    row([label, cell(mm.grouped_cv[k].roc_auc, bCv), cell(mm.time_split[k].roc_auc, bTs), cell(mm.time_split[k].pr_auc, bPr)])));
+  const imp = Object.entries(mm.feature_importance).filter(([, v]) => v > 0);
+  const maxImp = Math.max(...imp.map(([, v]) => v));
+  const label = f => f.replace(/_kt$|_km$/, '').replaceAll('_', ' ').replace('100km', '100 km').replace('200km', '200 km');
+  $('importance').replaceChildren(...imp.map(([f, v]) => {
+    const b = document.createElement('div'); b.className = 'bar';
+    b.innerHTML = '<span class="n"></span><span></span><div class="track"><div class="fill"></div></div>';
+    b.children[0].textContent = label(f); b.children[1].textContent = v.toFixed(3);
+    b.querySelector('.fill').style.width = (v / maxImp * 100) + '%';
+    return b;
+  }));
+
+  // --- prediction map
+  const storms = [...new Map(d.predictions.map(p => [p.storm + ' ' + p.season, p])).keys()];
+  storms.forEach(s => $('storm').append(new Option(s[0] + s.slice(1).split(' ')[0].toLowerCase() + ' ' + s.split(' ')[1], s)));
+  const ring = document.createElement('span'); ring.innerHTML = '<i class="ring"></i>actually received IA';
+  function renderStorm() {
+    const key = $('storm').value, ps = new Map(d.predictions.filter(p => p.storm + ' ' + p.season === key).map(p => [p.fips, p]));
+    const pct = n => n == null ? 'not in range' : Math.round(n * 100) + '%';
+    // fixed probability bins so storms are comparable
+    const bins = [[0, .2], [.2, .4], [.4, .6], [.6, .8], [.8, 1]];
+    d3.select($('pmap')).selectAll('path').data(features, f => f.id)
+      .join(enter => enter.append('path').attr('d', path).attr('tabindex', 0))
+      .attr('fill', f => { const p = ps.get(f.id); return p ? `var(${STEPS[Math.min(4, Math.floor(p.p * 5))]})` : 'var(--nodata)'; })
+      .attr('class', f => ps.get(f.id)?.actual ? 'actual' : null)
+      .attr('aria-label', f => { const p = ps.get(f.id); return `${f.properties.name}: predicted ${pct(p?.p)}${p?.actual ? ', received IA' : ''}`; })
+      .on('pointermove focus', (e, f) => { const p = ps.get(f.id); showTip(e, pct(p?.p), `${f.properties.name} · ${p?.actual ? 'received IA' : 'no IA'}`); })
+      .on('pointerleave blur', hideTip);
+    legend($('plegend'), bins, v => Math.round(v * 100) + '%', ring);
+    const vals = [...ps.values()], tp = vals.filter(p => p.actual && p.p >= .5).length;
+    $('storm-stats').textContent = `${vals.filter(p => p.actual).length} counties got IA · model flagged ${vals.filter(p => p.p >= .5).length} (${tp} correct)`;
+  }
+  $('storm').addEventListener('input', renderStorm);
+  // open on the most recent storm with the widest Individual Assistance footprint
+  const latest = d.predictions[0].season, iaCount = s => d.predictions.filter(p => p.storm + ' ' + p.season === s && p.actual).length;
+  $('storm').value = storms.filter(s => s.endsWith(' ' + latest)).sort((a, b) => iaCount(b) - iaCount(a))[0];
+  renderStorm();
+});
+
+function row(cells) {
+  const tr = document.createElement('tr');
+  for (const c of cells) {
+    const [v, cls] = Array.isArray(c) ? c : [c, ''];
+    tr.append(Object.assign(document.createElement('td'), { textContent: v, className: cls }));
+  }
+  return tr;
+}
+</script>
+</body>
+</html>

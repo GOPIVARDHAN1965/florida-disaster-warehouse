@@ -8,3 +8,5 @@ warehouse/target/
 warehouse/logs/
 warehouse/dbt_packages/
 .env
+warehouse/.user.yml
+docs/dbt/

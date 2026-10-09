@@ -9,7 +9,7 @@ clean-targets: ["target", "logs"]
 models:
   florida_disaster_warehouse:
     staging:
-      +materialized: view
+      +materialized: table  # tables, not views: the .duckdb file stays self-contained
       +schema: staging
     intermediate:
       +materialized: table

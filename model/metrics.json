@@ -1,0 +1,253 @@
+{
+  "rows": 3205,
+  "positives": 446,
+  "storms": 104,
+  "features": [
+    "min_distance_km",
+    "wind_at_closest_kt",
+    "max_wind_within_100km_kt",
+    "max_wind_within_200km_kt",
+    "hours_within_200km",
+    "landfall_within_100km",
+    "log_population",
+    "water_share"
+  ],
+  "grouped_cv": {
+    "baseline_rule": {
+      "roc_auc": 0.674,
+      "pr_auc": 0.39,
+      "f1_at_0.5": 0.502,
+      "brier": 0.099
+    },
+    "logistic_regression": {
+      "roc_auc": 0.841,
+      "pr_auc": 0.604,
+      "f1_at_0.5": 0.531,
+      "brier": 0.135
+    },
+    "gradient_boosting": {
+      "roc_auc": 0.785,
+      "pr_auc": 0.605,
+      "f1_at_0.5": 0.544,
+      "brier": 0.117
+    }
+  },
+  "time_split": {
+    "train_seasons": "2000-2019",
+    "test_seasons": "2020+",
+    "test_rows": 788,
+    "test_positives": 136,
+    "baseline_rule": {
+      "roc_auc": 0.725,
+      "pr_auc": 0.483,
+      "f1_at_0.5": 0.601,
+      "brier": 0.108
+    },
+    "logistic_regression": {
+      "roc_auc": 0.923,
+      "pr_auc": 0.739,
+      "f1_at_0.5": 0.622,
+      "brier": 0.158
+    },
+    "gradient_boosting": {
+      "roc_auc": 0.895,
+      "pr_auc": 0.744,
+      "f1_at_0.5": 0.626,
+      "brier": 0.126
+    }
+  },
+  "feature_importance": {
+    "max_wind_within_100km_kt": 0.1278,
+    "max_wind_within_200km_kt": 0.0858,
+    "wind_at_closest_kt": 0.0742,
+    "landfall_within_100km": 0.0243,
+    "min_distance_km": 0.0185,
+    "log_population": 0.0059,
+    "hours_within_200km": 0.0021,
+    "water_share": -0.0005
+  },
+  "time_split_by_storm": {
+    "ARTHUR": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "ALEX": {
+      "season": 2022,
+      "counties_with_ia": 0,
+      "predicted": 8,
+      "caught": 0,
+      "false_alarms": 8
+    },
+    "BERTHA": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "ARLENE": {
+      "season": 2023,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "CRISTOBAL": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "CLAUDETTE": {
+      "season": 2021,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "COLIN": {
+      "season": 2022,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "CHANTAL": {
+      "season": 2025,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "DANNY": {
+      "season": 2021,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "DEBBY": {
+      "season": 2024,
+      "counties_with_ia": 17,
+      "predicted": 34,
+      "caught": 16,
+      "false_alarms": 18
+    },
+    "ELSA": {
+      "season": 2021,
+      "counties_with_ia": 0,
+      "predicted": 9,
+      "caught": 0,
+      "false_alarms": 9
+    },
+    "FAY": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "FRED": {
+      "season": 2021,
+      "counties_with_ia": 0,
+      "predicted": 6,
+      "caught": 0,
+      "false_alarms": 6
+    },
+    "FRANCINE": {
+      "season": 2024,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "ISAIAS": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 4,
+      "caught": 0,
+      "false_alarms": 4
+    },
+    "IAN": {
+      "season": 2022,
+      "counties_with_ia": 26,
+      "predicted": 34,
+      "caught": 25,
+      "false_alarms": 9
+    },
+    "HELENE": {
+      "season": 2024,
+      "counties_with_ia": 30,
+      "predicted": 50,
+      "caught": 30,
+      "false_alarms": 20
+    },
+    "IDALIA": {
+      "season": 2023,
+      "counties_with_ia": 18,
+      "predicted": 35,
+      "caught": 14,
+      "false_alarms": 21
+    },
+    "MINDY": {
+      "season": 2021,
+      "counties_with_ia": 0,
+      "predicted": 5,
+      "caught": 0,
+      "false_alarms": 5
+    },
+    "MARCO": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "MILTON": {
+      "season": 2024,
+      "counties_with_ia": 34,
+      "predicted": 33,
+      "caught": 32,
+      "false_alarms": 1
+    },
+    "OMAR": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "NICOLE": {
+      "season": 2022,
+      "counties_with_ia": 6,
+      "predicted": 23,
+      "caught": 3,
+      "false_alarms": 20
+    },
+    "SALLY": {
+      "season": 2020,
+      "counties_with_ia": 5,
+      "predicted": 8,
+      "caught": 4,
+      "false_alarms": 4
+    },
+    "ZETA": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 0,
+      "caught": 0,
+      "false_alarms": 0
+    },
+    "ETA": {
+      "season": 2020,
+      "counties_with_ia": 0,
+      "predicted": 14,
+      "caught": 0,
+      "false_alarms": 14
+    }
+  }
+}
