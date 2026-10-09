@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: dim_county
+    description: Florida's 67 counties with centroid, area and latest population estimate.
+    data_tests:
+      - row_count_equals:
+          arguments: {expected: 67}
+    columns:
+      - name: county_fips
+        data_tests: [unique, not_null]
+      - name: population
+        data_tests: [not_null]
+
+  - name: dim_disaster
+    description: One row per Florida FEMA declaration, linked to the NOAA storm that caused it (if any) and FEMA's dollar totals.
+    columns:
+      - name: disaster_number
+        data_tests: [unique, not_null]
+      - name: storm_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('int_storms'), field: storm_id}
+
+  - name: fct_disaster_county
+    description: Grain disaster × county. Programs declared plus Individual Assistance (homeowners) and Public Assistance dollars.
+    columns:
+      - name: disaster_county_key
+        data_tests: [unique, not_null]
+      - name: county_fips
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_county'), field: county_fips}
+      - name: disaster_number
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_disaster'), field: disaster_number}
+
+  - name: fct_pa_projects
+    description: Public Assistance projects with days from declaration to first obligation.
+    columns:
+      - name: pa_project_key
+        data_tests: [unique, not_null]
+      - name: days_to_first_obligation
+        data_tests:
+          - non_negative:
+              config: {severity: warn}
+
+  - name: fct_hma_projects
+    description: Hazard Mitigation Assistance projects (HMGP, FMA, BRIC, PDM).
+    columns:
+      - name: hma_project_id
+        data_tests: [unique, not_null]
+
+  - name: fct_nfip_claims_county_year
+    description: NFIP flood claims aggregated to county × year of loss.
+    columns:
+      - name: county_year_key
+        data_tests: [unique, not_null]
+
+  - name: mart_county_summary
+    description: Per-county exposure, recovery dollars (IHP + PA + NFIP) and mitigation dollars since 2000.
+    columns:
+      - name: county_fips
+        data_tests: [unique, not_null]
+
+  - name: ml_storm_county_features
+    description: Model training set, storm × county for storms since 2000 within 300 km. Label is ia_declared.
+    columns:
+      - name: storm_county_key
+        data_tests: [unique, not_null]
+      - name: ia_declared
+        data_tests: [not_null]

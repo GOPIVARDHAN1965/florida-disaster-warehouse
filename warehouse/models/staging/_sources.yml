@@ -1,0 +1,36 @@
+version: 2
+
+sources:
+  - name: openfema
+    description: Raw OpenFEMA API pulls (append-only Parquet, every column VARCHAR). See extract/openfema.py.
+    meta:
+      external_location: "../data/raw/openfema/{name}/*.parquet"
+    tables:
+      - name: disaster_declarations
+        description: One row per disaster × designated area (county, statewide, or tribe). Incremental by lastRefresh.
+      - name: disaster_summaries
+        description: Per-disaster IA / PA / HMGP dollar totals, national. Incremental by lastRefresh.
+      - name: housing_assistance_owners
+        description: Individuals & Households Program (owners) by disaster × county × city × zip. Full refresh.
+      - name: pa_projects
+        description: Public Assistance funded projects (project worksheets). Incremental by lastRefresh.
+      - name: hma_projects
+        description: Hazard Mitigation Assistance projects (HMGP, FMA, BRIC, PDM...). Full refresh.
+      - name: nfip_claims
+        description: NFIP flood insurance claims (redacted, selected columns). Full refresh.
+
+  - name: noaa
+    meta:
+      external_location: "../data/raw/noaa/{name}.parquet"
+    tables:
+      - name: hurdat2_tracks
+        description: NHC HURDAT2 Atlantic best track, one row per 6-hourly observation since 1851.
+
+  - name: census
+    meta:
+      external_location: "../data/raw/census/{name}.parquet"
+    tables:
+      - name: county_population
+        description: Census Population Estimates, Florida counties, 2020-2025.
+      - name: county_centroids
+        description: Census Gazetteer, Florida county internal points and land/water area.

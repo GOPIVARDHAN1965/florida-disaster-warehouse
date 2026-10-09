@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: stg_fema__disaster_declarations
+    description: Latest version of each FEMA declaration row for Florida, typed.
+    columns:
+      - name: declaration_id
+        data_tests: [unique, not_null]
+      - name: disaster_number
+        data_tests: [not_null]
+      - name: declaration_type
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["DR", "EM", "FM"]}
+      - name: county_fips
+        data_tests:
+          - relationships:
+              arguments: {to: ref('int_counties'), field: county_fips}
+
+  - name: stg_fema__disaster_summaries
+    columns:
+      - name: disaster_number
+        data_tests: [unique, not_null]
+
+  - name: stg_fema__housing_assistance_owners
+    columns:
+      - name: row_id
+        data_tests: [unique, not_null]
+      - name: ihp_approved_amount
+        data_tests:
+          - non_negative
+
+  - name: stg_fema__pa_projects
+    columns:
+      - name: pa_project_key
+        data_tests: [unique, not_null]
+      - name: county_fips
+        data_tests:
+          - relationships:
+              arguments: {to: ref('int_counties'), field: county_fips}
+      - name: damage_category_code
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["A", "B", "C", "D", "E", "F", "G", "Z"]}
+              config: {severity: warn}
+
+  - name: stg_fema__hma_projects
+    columns:
+      - name: hma_project_id
+        data_tests: [unique, not_null]
+      - name: county_fips
+        data_tests:
+          - relationships:
+              arguments: {to: ref('int_counties'), field: county_fips}
+              config: {severity: warn}
+
+  - name: stg_fema__nfip_claims
+    columns:
+      - name: claim_id
+        data_tests: [unique, not_null]
+      - name: county_fips
+        data_tests:
+          - relationships:
+              arguments: {to: ref('int_counties'), field: county_fips}
+
+  - name: stg_noaa__track_points
+    columns:
+      - name: storm_id
+        data_tests: [not_null]
+      - name: lat
+        data_tests: [not_null]
+
+  - name: stg_census__county_centroids
+    columns:
+      - name: county_fips
+        data_tests: [unique, not_null]
+      - name: county_key
+        data_tests: [unique]
