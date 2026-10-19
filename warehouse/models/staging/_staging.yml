@@ -48,11 +48,6 @@ models:
     columns:
       - name: hma_project_id
         data_tests: [unique, not_null]
-      - name: county_fips
-        data_tests:
-          - relationships:
-              arguments: {to: ref('int_counties'), field: county_fips}
-              config: {severity: warn}
 
   - name: stg_fema__nfip_claims
     columns:

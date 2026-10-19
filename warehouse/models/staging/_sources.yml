@@ -15,7 +15,7 @@ sources:
       - name: pa_projects
         description: Public Assistance funded projects (project worksheets). Incremental by lastRefresh.
       - name: hma_projects
-        description: Hazard Mitigation Assistance projects (HMGP, FMA, BRIC, PDM...). Full refresh.
+        description: Hazard Mitigation Assistance subapplications (HMGP, FMA, BRIC, PDM...), from HmaSubapplications v2. Full refresh.
       - name: nfip_claims
         description: NFIP flood insurance claims (redacted, selected columns). Full refresh.
 

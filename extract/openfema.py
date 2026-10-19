@@ -7,6 +7,7 @@ Raw layer is append-only: every run writes data/raw/openfema/<name>/<load_id>.pa
 
 Usage: python extract/openfema.py [--full]
 """
+import http.client
 import json
 import sys
 import tempfile
@@ -29,7 +30,7 @@ DATASETS = {
     "disaster_summaries": ("v1/FemaWebDisasterSummaries", None, True, "id", None),  # national; filtered to FL in dbt
     "housing_assistance_owners": ("v2/HousingAssistanceOwners", "state eq 'FL'", False, "id", None),
     "pa_projects": ("v2/PublicAssistanceFundedProjectsDetails", "stateAbbreviation eq 'FL'", True, "hash", None),
-    "hma_projects": ("v4/HazardMitigationAssistanceProjects", "state eq 'Florida'", False, "id", None),
+    "hma_projects": ("v2/HmaSubapplications", "subapplicantStateAbbreviation eq 'FL'", False, "id", None),  # replaced HMA Projects v4, retired 2026-10-15
     "nfip_claims": ("v3/NfipClaims", "state eq 'FL'", False, "id",
                     "id,countyCode,dateOfLoss,yearOfLoss,floodEvent,eventDesignationNumber,causeOfDamage,"
                     "ratedFloodZone,occupancyType,primaryResidenceIndicator,elevatedBuildingIndicator,"
@@ -44,7 +45,7 @@ def fetch(url):
         try:
             with urllib.request.urlopen(url, timeout=120) as r:
                 return json.load(r)
-        except OSError as e:
+        except (OSError, http.client.HTTPException) as e:  # IncompleteRead on dropped connections
             if attempt == 3:
                 raise
             print(f"  retry {attempt + 1}: {e}", flush=True)
