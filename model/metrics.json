@@ -57,14 +57,14 @@
     }
   },
   "feature_importance": {
-    "max_wind_within_100km_kt": 0.1344,
-    "max_wind_within_200km_kt": 0.0873,
-    "wind_at_closest_kt": 0.0772,
-    "landfall_within_100km": 0.0261,
-    "min_distance_km": 0.0181,
-    "log_population": 0.0053,
-    "hours_within_200km": 0.0028,
-    "water_share": -0.0004
+    "max_wind_within_100km_kt": 0.14,
+    "max_wind_within_200km_kt": 0.0924,
+    "wind_at_closest_kt": 0.0854,
+    "landfall_within_100km": 0.026,
+    "min_distance_km": 0.0192,
+    "log_population": 0.0052,
+    "hours_within_200km": 0.0023,
+    "water_share": -0.0005
   },
   "time_split_by_storm": {
     "ARTHUR": {
